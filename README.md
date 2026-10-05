@@ -51,7 +51,9 @@ Note: locally, API calls will fail unless you also set up Vercel KV env vars loc
 
 ## Access control
 
-- Each person signs in with their name and a personal access code (stored in the `TEAM_CODES` env var as JSON, e.g. `{"Tobi":"ABCD1234"}`). Sessions are signed with `AUTH_SECRET`.
+- Sign-in is by official email: the person enters their `@gosolosafe.net` address, receives a 6-digit one-time code (valid 10 minutes, 5 attempts, 1 code per minute), and enters it. The team list (name ↔ email) lives in `MEMBERS` in `lib/auth.js`.
+- Codes are emailed through Google Workspace SMTP using the `SMTP_USER` and `SMTP_PASS` (Google app password) env vars. Sessions are signed with `AUTH_SECRET`.
 - **Admins** (`ADMINS` in `lib/auth.js`: Inioluwa, Tobi) see every entry.
 - **Everyone else** sees their own entries plus every blocker on the team (including the blockers field of other people's daily/weekly updates). Nothing else from other people is returned by the API.
 - Entries are always saved under the signed-in person's name.
+- To add or remove someone, edit `MEMBERS` and push.

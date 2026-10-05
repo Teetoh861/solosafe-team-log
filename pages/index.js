@@ -32,8 +32,10 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
 
   const [me, setMe] = useState(undefined); // undefined = checking, null = signed out
-  const [loginName, setLoginName] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
   const [loginCode, setLoginCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [loginBusy, setLoginBusy] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [type, setType] = useState("Daily");
   const [completed, setCompleted] = useState("");
@@ -77,22 +79,45 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [me]);
 
-  async function handleLogin(e) {
+  async function postSession(body) {
+    const res = await fetch("/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Something went wrong.");
+    return data;
+  }
+
+  async function handleRequestCode(e) {
     e.preventDefault();
     setLoginError("");
+    setLoginBusy(true);
     try {
-      const res = await fetch("/api/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: loginName, code: loginCode }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not sign in.");
-      setLoginCode("");
-      setLoading(true);
-      setMe(data);
+      await postSession({ action: "request", email: loginEmail });
+      setCodeSent(true);
     } catch (err) {
       setLoginError(err.message);
+    } finally {
+      setLoginBusy(false);
+    }
+  }
+
+  async function handleVerify(e) {
+    e.preventDefault();
+    setLoginError("");
+    setLoginBusy(true);
+    try {
+      const user = await postSession({ action: "verify", email: loginEmail, code: loginCode });
+      setLoginCode("");
+      setCodeSent(false);
+      setLoading(true);
+      setMe(user);
+    } catch (err) {
+      setLoginError(err.message);
+    } finally {
+      setLoginBusy(false);
     }
   }
 
@@ -145,41 +170,71 @@ export default function Home() {
   if (me === null) {
     return (
       <div className="min-h-screen bg-paper flex items-center justify-center px-6">
-        <form onSubmit={handleLogin} className="w-full max-w-sm bg-brand text-white rounded-2xl p-6 sm:p-8 space-y-4">
+        <form
+          onSubmit={codeSent ? handleVerify : handleRequestCode}
+          className="w-full max-w-sm bg-brand text-white rounded-2xl p-6 sm:p-8 space-y-4"
+        >
           <div>
             <p className="text-sm font-semibold text-white/80">SoloSafe</p>
             <h1 className="text-xl font-semibold">Team Log</h1>
           </div>
-          <div>
-            <label className="block text-xs text-white/70 mb-1">Your name</label>
-            <select
-              value={loginName}
-              onChange={(e) => setLoginName(e.target.value)}
-              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white outline-none focus:bg-white/15"
-            >
-              <option value="" className="text-ink">Select{"…"}</option>
-              {TEAM.map((n) => (
-                <option key={n} value={n} className="text-ink">{n}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-white/70 mb-1">Access code</label>
-            <input
-              type="password"
-              value={loginCode}
-              onChange={(e) => setLoginCode(e.target.value)}
-              autoComplete="current-password"
-              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white outline-none focus:bg-white/15"
-            />
-          </div>
-          {loginError && <p className="text-sm text-amber-light bg-black/10 rounded-lg px-3 py-2">{loginError}</p>}
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-white text-brand font-semibold px-6 py-2.5 hover:bg-white/90 transition"
-          >
-            Sign in
-          </button>
+          {!codeSent ? (
+            <>
+              <div>
+                <label className="block text-xs text-white/70 mb-1">Your SoloSafe email</label>
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                  placeholder="name@gosolosafe.net"
+                  className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white placeholder-white/50 outline-none focus:bg-white/15"
+                />
+              </div>
+              {loginError && <p className="text-sm text-amber-light bg-black/10 rounded-lg px-3 py-2">{loginError}</p>}
+              <button
+                type="submit"
+                disabled={loginBusy}
+                className="w-full rounded-lg bg-white text-brand font-semibold px-6 py-2.5 hover:bg-white/90 transition disabled:opacity-60"
+              >
+                {loginBusy ? "Sending\u2026" : "Email me a code"}
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-white/80">
+                If <span className="font-medium text-white">{loginEmail}</span> is on the team, a 6-digit code is on its way. It expires in 10 minutes.
+              </p>
+              <div>
+                <label className="block text-xs text-white/70 mb-1">6-digit code</label>
+                <input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={loginCode}
+                  onChange={(e) => setLoginCode(e.target.value)}
+                  required
+                  className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white tracking-widest text-lg outline-none focus:bg-white/15"
+                />
+              </div>
+              {loginError && <p className="text-sm text-amber-light bg-black/10 rounded-lg px-3 py-2">{loginError}</p>}
+              <button
+                type="submit"
+                disabled={loginBusy}
+                className="w-full rounded-lg bg-white text-brand font-semibold px-6 py-2.5 hover:bg-white/90 transition disabled:opacity-60"
+              >
+                {loginBusy ? "Checking\u2026" : "Sign in"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCodeSent(false); setLoginCode(""); setLoginError(""); }}
+                className="w-full text-sm text-white/70 underline"
+              >
+                Use a different email
+              </button>
+            </>
+          )}
         </form>
       </div>
     );
