@@ -30,7 +30,7 @@ This app needs somewhere to actually store entries. Vercel KV is Vercel's own bu
 If you added the KV store after the first deploy, trigger a redeploy (Vercel → Deployments → ⋯ → Redeploy) so the new environment variables take effect.
 
 ### 5. Done
-Your app will be live at the `.vercel.app` URL Vercel gives you (or a custom domain if you add one). Share that link with the team — no login required, anyone with the link can log an entry.
+Your app will be live at the `.vercel.app` URL Vercel gives you (or a custom domain if you add one). Share that link with the team — no login required, everyone signs in with a personal access code (see Access control below).
 
 ## Editing the team list
 
@@ -48,3 +48,10 @@ npm run dev
 ```
 
 Note: locally, API calls will fail unless you also set up Vercel KV env vars locally (`vercel env pull` after linking the project with `vercel link`). Easiest to just test directly on the deployed Vercel URL.
+
+## Access control
+
+- Each person signs in with their name and a personal access code (stored in the `TEAM_CODES` env var as JSON, e.g. `{"Tobi":"ABCD1234"}`). Sessions are signed with `AUTH_SECRET`.
+- **Admins** (`ADMINS` in `lib/auth.js`: Inioluwa, Tobi) see every entry.
+- **Everyone else** sees their own entries plus every blocker on the team (including the blockers field of other people's daily/weekly updates). Nothing else from other people is returned by the API.
+- Entries are always saved under the signed-in person's name.

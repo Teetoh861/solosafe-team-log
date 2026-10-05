@@ -31,7 +31,10 @@ export default function Home() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const [name, setName] = useState("");
+  const [me, setMe] = useState(undefined); // undefined = checking, null = signed out
+  const [loginName, setLoginName] = useState("");
+  const [loginCode, setLoginCode] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [type, setType] = useState("Daily");
   const [completed, setCompleted] = useState("");
   const [planned, setPlanned] = useState("");
@@ -45,6 +48,10 @@ export default function Home() {
   async function load() {
     try {
       const res = await fetch("/api/entries");
+      if (res.status === 401) {
+        setMe(null);
+        return;
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not load entries.");
       setEntries(data.entries || []);
@@ -57,21 +64,50 @@ export default function Home() {
   }
 
   useEffect(() => {
+    fetch("/api/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((u) => setMe(u))
+      .catch(() => setMe(null));
+  }, []);
+
+  useEffect(() => {
+    if (!me) return;
     load();
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [me]);
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    setLoginError("");
+    try {
+      const res = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: loginName, code: loginCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not sign in.");
+      setLoginCode("");
+      setLoading(true);
+      setMe(data);
+    } catch (err) {
+      setLoginError(err.message);
+    }
+  }
+
+  async function handleLogout() {
+    await fetch("/api/session", { method: "DELETE" });
+    setEntries([]);
+    setMe(null);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!name) {
-      setError("Pick your name first.");
-      return;
-    }
     setSubmitting(true);
     setError("");
     try {
-      const body = { name, type, completed, planned, blockers, needsDecision, escalatedTo };
+      const body = { type, completed, planned, blockers, needsDecision, escalatedTo };
       const res = await fetch("/api/entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,6 +138,53 @@ export default function Home() {
 
   const grouped = groupByDay(filtered);
 
+  if (me === undefined) {
+    return <div className="min-h-screen bg-paper" />;
+  }
+
+  if (me === null) {
+    return (
+      <div className="min-h-screen bg-paper flex items-center justify-center px-6">
+        <form onSubmit={handleLogin} className="w-full max-w-sm bg-brand text-white rounded-2xl p-6 sm:p-8 space-y-4">
+          <div>
+            <p className="text-sm font-semibold text-white/80">SoloSafe</p>
+            <h1 className="text-xl font-semibold">Team Log</h1>
+          </div>
+          <div>
+            <label className="block text-xs text-white/70 mb-1">Your name</label>
+            <select
+              value={loginName}
+              onChange={(e) => setLoginName(e.target.value)}
+              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white outline-none focus:bg-white/15"
+            >
+              <option value="" className="text-ink">Select{"…"}</option>
+              {TEAM.map((n) => (
+                <option key={n} value={n} className="text-ink">{n}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-white/70 mb-1">Access code</label>
+            <input
+              type="password"
+              value={loginCode}
+              onChange={(e) => setLoginCode(e.target.value)}
+              autoComplete="current-password"
+              className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white outline-none focus:bg-white/15"
+            />
+          </div>
+          {loginError && <p className="text-sm text-amber-light bg-black/10 rounded-lg px-3 py-2">{loginError}</p>}
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-white text-brand font-semibold px-6 py-2.5 hover:bg-white/90 transition"
+          >
+            Sign in
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-paper">
       <header className="border-b border-line">
@@ -110,29 +193,23 @@ export default function Home() {
             <p className="text-sm tracking-tight text-brand font-semibold">SoloSafe</p>
             <h1 className="text-2xl font-semibold text-ink">Team Log</h1>
           </div>
-          <p className="text-sm text-inkfaint">Daily updates, weekly check-ins, blockers — one place.</p>
+          <div className="text-right text-sm text-inkfaint">
+            <p>
+              Signed in as <span className="text-ink font-medium">{me.name}</span>
+              {" · "}
+              <button onClick={handleLogout} className="underline">Log out</button>
+            </p>
+            <p>{me.isAdmin ? "You can see every entry." : "You see your own updates and all blockers."}</p>
+          </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-3xl px-6 py-8 space-y-10">
         {/* Entry form — the one bold element */}
         <section className="bg-brand text-white rounded-2xl p-6 sm:p-8">
-          <h2 className="text-lg font-semibold mb-4">Log an update</h2>
+          <h2 className="text-lg font-semibold mb-4">Log an update <span className="text-white/70 font-normal text-sm">as {me.name}</span></h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs text-white/70 mb-1">Your name</label>
-                <select
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 text-white placeholder-white/50 focus:bg-white/15 outline-none"
-                >
-                  <option value="" className="text-ink">Select{"…"}</option>
-                  {TEAM.map((n) => (
-                    <option key={n} value={n} className="text-ink">{n}</option>
-                  ))}
-                </select>
-              </div>
+            <div>
               <div>
                 <label className="block text-xs text-white/70 mb-1">Type</label>
                 <div className="flex gap-2">
@@ -246,14 +323,14 @@ export default function Home() {
         {/* Filters */}
         <section className="flex flex-wrap items-center gap-3 text-sm">
           <span className="text-inkfaint">Show:</span>
-          <select
+          {me.isAdmin && <select
             value={filterName}
             onChange={(e) => setFilterName(e.target.value)}
             className="rounded-md border border-line bg-white px-2 py-1.5 text-ink"
           >
             <option>All</option>
             {TEAM.map((n) => <option key={n}>{n}</option>)}
-          </select>
+          </select>}
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
