@@ -112,6 +112,18 @@ export default function Home() {
     [entries]
   );
 
+  const pendingDecisions = useMemo(
+    () =>
+      entries
+        .filter((e) => e.needsDecision && e.decisionStatus !== "Decided")
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
+    [entries]
+  );
+  const attention = useMemo(
+    () => [...openBlockers, ...pendingDecisions].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
+    [openBlockers, pendingDecisions]
+  );
+
   const missingToday = useMemo(() => {
     if (!me?.isAdmin) return [];
     const now = new Date();
@@ -129,9 +141,9 @@ export default function Home() {
   // With no filters on, open blockers already show in "Needs attention", so skip them in the feed.
   const feed = useMemo(() => {
     if (filterName !== "All" || filterType !== "All") return filtered;
-    const pinned = new Set(openBlockers.map((e) => e.id));
+    const pinned = new Set(attention.map((e) => e.id));
     return filtered.filter((e) => !pinned.has(e.id));
-  }, [filtered, openBlockers, filterName, filterType]);
+  }, [filtered, attention, filterName, filterType]);
   const grouped = groupByDay(feed);
 
   if (me === undefined) return <div className="min-h-screen bg-paper" />;
@@ -145,16 +157,18 @@ export default function Home() {
 
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 sm:py-8 space-y-8">
         {/* Needs attention */}
-        {openBlockers.length > 0 && (
+        {attention.length > 0 && (
           <section className="rounded-2xl border border-amber/40 bg-amber-light p-4 sm:p-5">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-sm font-semibold text-amber">
-                Needs attention · {openBlockers.length} open blocker{openBlockers.length === 1 ? "" : "s"}
+                Needs attention
+                {openBlockers.length > 0 && ` · ${openBlockers.length} open blocker${openBlockers.length === 1 ? "" : "s"}`}
+                {pendingDecisions.length > 0 && ` · ${pendingDecisions.length} decision${pendingDecisions.length === 1 ? "" : "s"} waiting`}
               </h2>
               <span className="text-xs text-amber/80">Oldest first</span>
             </div>
             <ul className="divide-y divide-amber/20">
-              {openBlockers.map((e) => (
+              {attention.map((e) => (
                 <EntryCard key={e.id} entry={e} {...cardProps} />
               ))}
             </ul>

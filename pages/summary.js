@@ -112,7 +112,12 @@ export default function Summary() {
                     {e.completed && <p><span className="text-inkfaint">Completed:</span> {e.completed}</p>}
                     {e.planned && <p><span className="text-inkfaint">Next week:</span> {e.planned}</p>}
                     {e.blockers && <p><span className="text-inkfaint">Blocked on:</span> {e.blockers}</p>}
-                    {e.needsDecision && <p><span className="text-inkfaint">Needs decision:</span> {e.needsDecision}</p>}
+                    {e.needsDecision && (
+                      <p>
+                        <span className="text-inkfaint">Needs decision:</span> {e.needsDecision}
+                        <span className="text-inkfaint"> — {e.decisionStatus === "Decided" ? `decided by ${e.decidedBy}` : "waiting"}</span>
+                      </p>
+                    )}
                   </div>
                 ))}
 

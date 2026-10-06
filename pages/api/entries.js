@@ -111,6 +111,22 @@ export default async function handler(req, res) {
         return res.status(200).json({ entry: await saveEntry(next) });
       }
 
+      if (action === "decide" || action === "undecide") {
+        if (!isAdmin(user)) return res.status(403).json({ error: "Only admins can record decisions." });
+        if (!entry.needsDecision) return res.status(400).json({ error: "This entry has no decision request." });
+        const next = { ...entry };
+        if (action === "decide") {
+          next.decisionStatus = "Decided";
+          next.decidedAt = new Date().toISOString();
+          next.decidedBy = user;
+        } else {
+          delete next.decisionStatus;
+          delete next.decidedAt;
+          delete next.decidedBy;
+        }
+        return res.status(200).json({ entry: await saveEntry(next) });
+      }
+
       if (action === "request-change") {
         const message = clean(req.body.message).trim();
         if (message.length < 5) return res.status(400).json({ error: "Please explain what needs to change." });

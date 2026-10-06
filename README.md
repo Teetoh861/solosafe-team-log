@@ -62,7 +62,7 @@ Note: locally, API calls will fail unless you also set up Vercel KV env vars loc
 
 - **Instant email** to the admins (other than the author) when someone logs a blocker, or a daily/weekly update that has a blocker line.
 - **Reminder** (weekdays, 16:00 Lagos): anyone with no daily/weekly update that day gets an email. **Digest** (weekdays, 18:00 Lagos): the admins get open blockers, today's updates and who hasn't logged. Both run from `vercel.json` crons and require the `CRON_SECRET` env var (Vercel sends it automatically).
-- **Needs a decision**: a weekly check-in with a decision request emails the admins instantly, is tagged in the feed and is listed in the digest for 7 days.
+- **Needs a decision**: a weekly check-in with a decision request emails the admins instantly, is pinned in "Needs attention" and listed in the digest until an admin clicks "Mark decided".
 - **Resolve**: the author or an admin can mark a blocker resolved or reopen it. Open blockers are pinned in "Needs attention", oldest first.
 - **Edit/delete**: authors can edit or delete their own entries for 3 hours (`EDIT_WINDOW_MINUTES`, default 180). After that they use "Request a change", which emails the admins. Admins can always edit or delete.
 - **Weekly summary** (`/summary`, admins only): per-person view of the week Monday–Sunday, with days logged, updates and blockers.

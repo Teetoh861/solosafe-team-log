@@ -31,6 +31,8 @@ export default function EntryCard({ entry: e, me, editWindowMs, onChanged, onErr
   const canRequest = !e.derived && mine && !me.isAdmin && remaining <= 0;
   const canResolve = e.type === "Blocker" && !e.derived && (mine || me.isAdmin);
   const resolved = e.type === "Blocker" && e.status === "Resolved";
+  const decided = e.decisionStatus === "Decided";
+  const canDecide = me.isAdmin && !!e.needsDecision;
 
   async function run(fn) {
     setBusy(true);
@@ -72,7 +74,13 @@ export default function EntryCard({ entry: e, me, editWindowMs, onChanged, onErr
             {e.type}
           </span>
           {e.needsDecision && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-light text-amber">Needs decision</span>
+            <span
+              className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                decided ? "bg-green-100 text-green-800" : "bg-amber-light text-amber"
+              }`}
+            >
+              {decided ? "Decided" : "Needs decision"}
+            </span>
           )}
           {e.type === "Blocker" && (
             <span
@@ -161,6 +169,7 @@ export default function EntryCard({ entry: e, me, editWindowMs, onChanged, onErr
           {e.needsDecision && (
             <p>
               <span className="text-inkfaint">Needs decision:</span> {e.needsDecision}
+              {decided && e.decidedBy && <span className="text-inkfaint"> — decided by {e.decidedBy}</span>}
             </p>
           )}
         </div>
@@ -193,7 +202,7 @@ export default function EntryCard({ entry: e, me, editWindowMs, onChanged, onErr
         </div>
       )}
 
-      {mode === null && (canResolve || canChange || canRequest) && (
+      {mode === null && (canResolve || canDecide || canChange || canRequest) && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {canResolve && (
             <button
@@ -204,6 +213,17 @@ export default function EntryCard({ entry: e, me, editWindowMs, onChanged, onErr
               } disabled:opacity-60`}
             >
               {resolved ? "Reopen" : "Mark resolved"}
+            </button>
+          )}
+          {canDecide && (
+            <button
+              disabled={busy}
+              onClick={() => run(() => api("/api/entries", { method: "PATCH", body: { id: e.id, action: decided ? "undecide" : "decide" } }))}
+              className={`text-xs font-semibold px-3 py-2 rounded-md ${
+                decided ? "border border-line hover:bg-line/50" : "bg-green-700 text-white hover:bg-green-800"
+              } disabled:opacity-60`}
+            >
+              {decided ? "Reopen decision" : "Mark decided"}
             </button>
           )}
           {canChange && (
