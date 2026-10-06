@@ -12,10 +12,10 @@ export default async function handler(req, res) {
   }
   try {
     const entries = await listEntries();
-    const { text, openBlockers, missing } = buildDigest(entries);
+    const { text, openBlockers, decisions, missing } = buildDigest(entries);
     await sendMail({
       to: adminEmails().join(","),
-      subject: `Team Log digest — ${prettyDay(lagosDay(new Date()))} (${openBlockers} open blocker${openBlockers === 1 ? "" : "s"}, ${missing.length} not logged)`,
+      subject: `Team Log digest — ${prettyDay(lagosDay(new Date()))} (${openBlockers} open blocker${openBlockers === 1 ? "" : "s"}, ${decisions} decision${decisions === 1 ? "" : "s"}, ${missing.length} not logged)`,
       text,
     });
     return res.status(200).json({ ok: true, openBlockers, missing });

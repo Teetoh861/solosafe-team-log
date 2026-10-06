@@ -1,6 +1,6 @@
 import { listEntries, addEntry, getEntry, saveEntry, deleteEntry } from "../../lib/kv";
 import { TEAM, getUser, isAdmin } from "../../lib/auth";
-import { notifyBlocker, notifyBlockerInUpdate, notifyChangeRequest } from "../../lib/notify";
+import { notifyBlocker, notifyBlockerInUpdate, notifyChangeRequest, notifyDecision } from "../../lib/notify";
 
 const TYPES = ["Daily", "Weekly", "Blocker"];
 const FIELDS = ["completed", "planned", "blockers", "needsDecision"];
@@ -68,6 +68,7 @@ export default async function handler(req, res) {
 
       if (type === "Blocker") await notifyBlocker(entry);
       else if (entry.blockers) await notifyBlockerInUpdate(entry);
+      if (entry.needsDecision) await notifyDecision(entry);
 
       return res.status(201).json({ entry });
     }

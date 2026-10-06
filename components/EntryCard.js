@@ -71,6 +71,9 @@ export default function EntryCard({ entry: e, me, editWindowMs, onChanged, onErr
           >
             {e.type}
           </span>
+          {e.needsDecision && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-light text-amber">Needs decision</span>
+          )}
           {e.type === "Blocker" && (
             <span
               className={`text-xs font-medium px-2 py-0.5 rounded-full ${
