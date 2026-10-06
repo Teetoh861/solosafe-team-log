@@ -57,3 +57,12 @@ Note: locally, API calls will fail unless you also set up Vercel KV env vars loc
 - **Everyone else** sees their own entries plus every blocker on the team (including the blockers field of other people's daily/weekly updates). Nothing else from other people is returned by the API.
 - Entries are always saved under the signed-in person's name.
 - To add or remove someone, edit `MEMBERS` and push.
+
+## Notifications, reminders and editing
+
+- **Instant email** to the admins (other than the author) when someone logs a blocker, or a daily/weekly update that has a blocker line.
+- **Reminder** (weekdays, 16:00 Lagos): anyone with no daily/weekly update that day gets an email. **Digest** (weekdays, 18:00 Lagos): the admins get open blockers, today's updates and who hasn't logged. Both run from `vercel.json` crons and require the `CRON_SECRET` env var (Vercel sends it automatically).
+- **Resolve**: the author or an admin can mark a blocker resolved or reopen it. Open blockers are pinned in "Needs attention", oldest first.
+- **Edit/delete**: authors can edit or delete their own entries for 3 hours (`EDIT_WINDOW_MINUTES`, default 180). After that they use "Request a change", which emails the admins. Admins can always edit or delete.
+- **Weekly summary** (`/summary`, admins only): per-person view of the week Monday–Sunday, with days logged, updates and blockers.
+- Times use `Africa/Lagos`. Vercel cron on the Hobby plan runs within the scheduled hour, not to the minute.
