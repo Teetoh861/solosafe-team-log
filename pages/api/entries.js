@@ -1,6 +1,6 @@
 import { listEntries, addEntry, getEntry, saveEntry, deleteEntry } from "../../lib/kv";
 import { TEAM, getUser, isAdmin } from "../../lib/auth";
-import { notifyBlocker, notifyBlockerInUpdate, notifyChangeRequest, notifyDecision } from "../../lib/notify";
+import { notifyBlocker, notifyBlockerInUpdate, notifyChangeRequest, notifyDecision, notifyDecided } from "../../lib/notify";
 
 const TYPES = ["Daily", "Weekly", "Blocker"];
 const FIELDS = ["completed", "planned", "blockers", "needsDecision"];
@@ -119,6 +119,7 @@ export default async function handler(req, res) {
           next.decisionStatus = "Decided";
           next.decidedAt = new Date().toISOString();
           next.decidedBy = user;
+          await notifyDecided(next, user);
         } else {
           delete next.decisionStatus;
           delete next.decidedAt;
