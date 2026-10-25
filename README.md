@@ -65,5 +65,9 @@ Note: locally, API calls will fail unless you also set up Vercel KV env vars loc
 - **Needs a decision**: a weekly check-in with a decision request emails the admins instantly, is pinned in "Needs attention" and listed in the digest until an admin clicks "Mark decided", which also emails the author.
 - **Resolve**: the author or an admin can mark a blocker resolved or reopen it. If someone else resolves it, the author is emailed and asked to reopen it if it isn't really fixed. Open blockers are pinned in "Needs attention", oldest first.
 - **Edit/delete**: authors can edit or delete their own entries for 3 hours (`EDIT_WINDOW_MINUTES`, default 180). After that they use "Request a change", which emails the admins. Admins can always edit or delete.
-- **Weekly summary** (`/summary`, admins only): an "At a glance" table plus a per-person view of the week Monday–Sunday. **Download CSV** exports the week or all entries (Excel-safe: UTF-8, formula-injection neutralised); **Save as PDF** uses the browser print dialog with a print-friendly layout.
+- **Weekly summary** (`/summary`, admins only): an "At a glance" table plus a per-person view of the week Monday–Sunday. **Download CSV** exports the week or all entries (Excel-safe: UTF-8, formula-injection neutralised); **Download PDF report** generates a formatted report on the server (`/api/report?week=0|-1|…`, admins only), and **Email me this PDF** sends it to the signed-in admin.
 - Times use `Africa/Lagos`. Vercel cron on the Hobby plan runs within the scheduled hour, not to the minute.
+
+## Friday weekly report
+
+On Fridays the 18:00 Lagos cron (`/api/cron/digest`) sends the admins a weekly report email instead of the daily digest: where things stand, a rule-based "Next actions" list (follow up on open blockers, assign owners to unescalated ones, pending decisions, people with nothing logged), with the full PDF attached (`lib/report.js`, built with pdfkit). Add `?weekly=1` to force it on another day. Note: the PDF uses built-in fonts, so emoji and non-Latin scripts are dropped; accented Latin letters are kept.

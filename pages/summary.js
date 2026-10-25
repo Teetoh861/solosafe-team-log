@@ -11,6 +11,8 @@ export default function Summary() {
   const [entries, setEntries] = useState(null);
   const [error, setError] = useState("");
   const [offset, setOffset] = useState(0);
+  const [emailing, setEmailing] = useState(false);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     if (!me?.isAdmin) return;
@@ -18,6 +20,20 @@ export default function Summary() {
       .then((d) => setEntries(d.entries || []))
       .catch((e) => (e.status === 401 ? setMe(null) : setError(e.message)));
   }, [me, setMe]);
+
+  async function emailReport() {
+    setEmailing(true);
+    setNotice("");
+    setError("");
+    try {
+      await api(`/api/report?week=${offset}`, { method: "POST" });
+      setNotice("Sent. Check your inbox for the PDF report.");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setEmailing(false);
+    }
+  }
 
   const start = weekStart(new Date(), offset);
   const allDays = [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(start, i));
@@ -108,16 +124,23 @@ export default function Summary() {
           >
             Download CSV (all entries)
           </button>
-          <button
-            onClick={() => window.print()}
-            disabled={!entries}
-            className="rounded-md bg-brand text-white px-3 py-2 text-sm font-semibold hover:bg-brand-dark disabled:opacity-40"
+          <a
+            href={`/api/report?week=${offset}`}
+            className="rounded-md bg-brand text-white px-3 py-2 text-sm font-semibold hover:bg-brand-dark"
           >
-            Save as PDF
+            Download PDF report
+          </a>
+          <button
+            onClick={emailReport}
+            disabled={emailing}
+            className="rounded-md border border-line bg-white px-3 py-2 text-sm font-medium hover:bg-line/50 disabled:opacity-40"
+          >
+            {emailing ? "Sending…" : "Email me this PDF"}
           </button>
         </div>
 
-        {error && <p className="text-sm text-red-700">{error}</p>}
+        {error && <p className="text-sm text-red-700 print:hidden">{error}</p>}
+        {notice && <p className="text-sm text-green-800 print:hidden">{notice}</p>}
         {!entries && !error && <p className="text-sm text-inkfaint">Loading…</p>}
 
         {entries && (
