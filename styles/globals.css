@@ -11,6 +11,15 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+@media print {
+  html, body {
+    background: #fff;
+  }
+  @page {
+    margin: 14mm;
+  }
+}
+
 :focus-visible {
   outline: 2px solid #2858D8;
   outline-offset: 2px;

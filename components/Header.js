@@ -13,7 +13,7 @@ export default function Header({ me, onLogout, active }) {
   );
 
   return (
-    <header className="border-b border-line bg-paper">
+    <header className="border-b border-line bg-paper print:hidden">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-baseline justify-between sm:block">
           <div>
