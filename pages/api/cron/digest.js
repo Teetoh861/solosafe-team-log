@@ -1,5 +1,6 @@
 import { adminEmails } from "../../../lib/auth";
 import { listEntries } from "../../../lib/kv";
+import { listSuggestions } from "../../../lib/suggestions";
 import { buildDigest } from "../../../lib/notify";
 import { buildReportData, renderReportPdf, reportEmailText, reportFilename, reportSubject } from "../../../lib/report";
 import { prettyDay, lagosDay, lagosWeekdayIndex } from "../../../lib/dates";
@@ -17,7 +18,7 @@ export default async function handler(req, res) {
     const entries = await listEntries();
 
     if (lagosWeekdayIndex(now) === 4 || req.query.weekly === "1") {
-      const data = buildReportData(entries, now, 0);
+      const data = buildReportData(entries, now, 0, await listSuggestions(null));
       const pdf = await renderReportPdf(data);
       await sendMail({
         to: adminEmails().join(","),

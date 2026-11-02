@@ -61,7 +61,7 @@ Note: locally, API calls will fail unless you also set up Vercel KV env vars loc
 ## Notifications, reminders and editing
 
 - **Instant email** to the admins (other than the author) when someone logs a blocker, or a daily/weekly update that has a blocker line.
-- **Reminder** (weekdays, 16:00 Lagos): anyone with no daily/weekly update that day gets an email. **Digest** (weekdays, 18:00 Lagos): the admins get open blockers, today's updates and who hasn't logged. Both run from `vercel.json` crons and require the `CRON_SECRET` env var (Vercel sends it automatically).
+- **Reminder** (Mondays, 09:00 Lagos): one weekly email to everyone, reminding them to log daily/weekly updates and blockers, and listing any of their blockers still open. **Digest** (weekdays, 18:00 Lagos): the admins get open blockers, today's updates and who hasn't logged. Both run from `vercel.json` crons and require the `CRON_SECRET` env var (Vercel sends it automatically).
 - **Needs a decision**: a weekly check-in with a decision request emails the admins instantly, is pinned in "Needs attention" and listed in the digest until an admin clicks "Mark decided", which also emails the author.
 - **Resolve**: the author or an admin can mark a blocker resolved or reopen it. If someone else resolves it, the author is emailed and asked to reopen it if it isn't really fixed. Open blockers are pinned in "Needs attention", oldest first.
 - **Edit/delete**: authors can edit or delete their own entries for 3 hours (`EDIT_WINDOW_MINUTES`, default 180). After that they use "Request a change", which emails the admins. Admins can always edit or delete.
@@ -70,7 +70,7 @@ Note: locally, API calls will fail unless you also set up Vercel KV env vars loc
 
 ## Friday weekly report
 
-On Fridays the 18:00 Lagos cron (`/api/cron/digest`) sends the admins a weekly report email instead of the daily digest: where things stand, a rule-based "Next actions" list (follow up on open blockers, assign owners to unescalated ones, pending decisions, people with nothing logged), with the full PDF attached (`lib/report.js`, built with pdfkit). Add `?weekly=1` to force it on another day. Note: the PDF uses built-in fonts, so emoji and non-Latin scripts are dropped; accented Latin letters are kept.
+On Fridays the 18:00 Lagos cron (`/api/cron/digest`) sends the admins a weekly report email instead of the daily digest: where things stand, suggestions activity (new, comments, still-unreviewed), a rule-based "Next actions" list (follow up on open blockers, assign owners to unescalated ones, pending decisions, people with nothing logged), with the full PDF attached (`lib/report.js`, built with pdfkit). Add `?weekly=1` to force it on another day. Note: the PDF uses built-in fonts, so emoji and non-Latin scripts are dropped; accented Latin letters are kept.
 
 ## Suggestions board
 

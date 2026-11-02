@@ -1,5 +1,6 @@
 import { getUser, isAdmin, memberByName } from "../../lib/auth";
 import { listEntries } from "../../lib/kv";
+import { listSuggestions } from "../../lib/suggestions";
 import { APP_URL, sendMail } from "../../lib/mail";
 import { buildReportData, renderReportPdf, reportEmailText, reportFilename, reportSubject } from "../../lib/report";
 
@@ -11,7 +12,7 @@ export default async function handler(req, res) {
     if (!isAdmin(user)) return res.status(403).json({ error: "Admins only." });
 
     const offset = Math.min(0, Math.max(-52, parseInt(req.query.week ?? "0", 10) || 0));
-    const data = buildReportData(await listEntries(), new Date(), offset);
+    const data = buildReportData(await listEntries(), new Date(), offset, await listSuggestions(user));
     const pdf = await renderReportPdf(data);
 
     if (req.method === "GET") {
