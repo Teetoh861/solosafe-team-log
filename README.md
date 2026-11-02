@@ -71,3 +71,7 @@ Note: locally, API calls will fail unless you also set up Vercel KV env vars loc
 ## Friday weekly report
 
 On Fridays the 18:00 Lagos cron (`/api/cron/digest`) sends the admins a weekly report email instead of the daily digest: where things stand, a rule-based "Next actions" list (follow up on open blockers, assign owners to unescalated ones, pending decisions, people with nothing logged), with the full PDF attached (`lib/report.js`, built with pdfkit). Add `?weekly=1` to force it on another day. Note: the PDF uses built-in fonts, so emoji and non-Latin scripts are dropped; accented Latin letters are kept.
+
+## Suggestions board
+
+`/suggestions` is an open, named board: every signed-in team member can post a feature idea or improvement, vote 👍 "Good idea" / 👎 "Not needed" (one vote each, tap again to remove) and comment. Everyone sees everything. Admins can set a status (New, Under review, Planned, Done, Declined); authors and admins can delete a suggestion or comment. Emails: admins are emailed about new suggestions, and the author is emailed when someone else comments or an admin changes the status. Data lives in KV under `solosafe:sug:*` (record, votes hash, comment ids) and `solosafe:sugc:*` (comments).

@@ -27,6 +27,7 @@ export default function Header({ me, onLogout, active }) {
         <div className="flex items-center justify-between sm:justify-end gap-4">
           <nav className="flex gap-1">
             {tab("/", "Log", "log")}
+            {tab("/suggestions", "Suggestions", "suggestions")}
             {me.isAdmin && tab("/summary", "Weekly summary", "summary")}
           </nav>
           <p className="hidden sm:block text-sm text-inkfaint text-right">
