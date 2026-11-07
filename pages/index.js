@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "../components/Header";
 import LoginScreen from "../components/LoginScreen";
 import EntryCard from "../components/EntryCard";
+import IdeaBanner from "../components/IdeaBanner";
 import { api, useSession } from "../lib/useSession";
 import { TEAM } from "../lib/team";
 import { lagosDay, lagosWeekdayIndex } from "../lib/dates";
@@ -156,6 +157,8 @@ export default function Home() {
       <Header me={me} onLogout={logout} active="log" />
 
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-6 sm:py-8 space-y-8">
+        <IdeaBanner />
+
         {/* Needs attention */}
         {attention.length > 0 && (
           <section className="rounded-2xl border border-amber/40 bg-amber-light p-4 sm:p-5">

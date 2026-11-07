@@ -1,41 +1,70 @@
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useUpdateAvailable } from "../lib/useUpdateAvailable";
+
+const SEEN_KEY = "sl_seen_suggestions";
 
 export default function Header({ me, onLogout, active }) {
-  const tab = (href, label, key) => (
+  const stale = useUpdateAvailable();
+  const [showNew, setShowNew] = useState(false);
+
+  // "New" tag on the Suggestions tab until the person has opened it once.
+  useEffect(() => {
+    try {
+      if (active === "suggestions") localStorage.setItem(SEEN_KEY, "1");
+      else setShowNew(!localStorage.getItem(SEEN_KEY));
+    } catch {
+      setShowNew(active !== "suggestions");
+    }
+  }, [active]);
+
+  const tab = (href, label, key, badge) => (
     <Link
       href={href}
-      className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-        active === key ? "bg-brand text-white" : "text-inkfaint hover:text-ink hover:bg-line/60"
+      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm sm:text-base font-medium border transition ${
+        active === key
+          ? "bg-brand text-white border-brand"
+          : "bg-white text-ink border-line hover:bg-line/50"
       }`}
     >
       {label}
+      {badge && (
+        <span className="rounded-full bg-amber text-white text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 leading-none">
+          New
+        </span>
+      )}
     </Link>
   );
 
   return (
     <header className="border-b border-line bg-paper print:hidden">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-baseline justify-between sm:block">
+      {stale && (
+        <div className="bg-brand text-white text-sm px-4 py-2 flex items-center justify-center gap-3">
+          <span>A new version of the Team Log is available.</span>
+          <button onClick={() => window.location.reload()} className="rounded-md bg-white text-brand font-semibold px-3 py-1">
+            Refresh
+          </button>
+        </div>
+      )}
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-4 pb-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm tracking-tight text-brand font-semibold leading-none">SoloSafe</p>
             <h1 className="text-xl sm:text-2xl font-semibold text-ink">Team Log</h1>
           </div>
-          <p className="text-xs text-inkfaint sm:hidden text-right">
-            {me.name} · <button onClick={onLogout} className="underline">Log out</button>
-          </p>
-        </div>
-        <div className="flex items-center justify-between sm:justify-end gap-4">
-          <nav className="flex gap-1">
-            {tab("/", "Log", "log")}
-            {tab("/suggestions", "Suggestions", "suggestions")}
-            {me.isAdmin && tab("/summary", "Weekly summary", "summary")}
-          </nav>
-          <p className="hidden sm:block text-sm text-inkfaint text-right">
+          <p className="text-xs sm:text-sm text-inkfaint text-right pt-0.5">
             <span className="text-ink font-medium">{me.name}</span>
             {" · "}
-            <button onClick={onLogout} className="underline">Log out</button>
+            <button onClick={onLogout} className="underline">
+              Log out
+            </button>
           </p>
         </div>
+        <nav className="mt-3 flex flex-wrap gap-2">
+          {tab("/", "Log", "log")}
+          {tab("/suggestions", "Suggestions", "suggestions", showNew && active !== "suggestions")}
+          {me.isAdmin && tab("/summary", "Weekly summary", "summary")}
+        </nav>
       </div>
     </header>
   );
